@@ -1,0 +1,8 @@
+[package]
+name = "xinput-json"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libc = "0.2.150"
+x11 = { version = "2.21.0", features = ["xlib", "xinput"] }
