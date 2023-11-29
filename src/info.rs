@@ -22,10 +22,11 @@ pub enum DeviceUse {
 
 #[derive(Serialize)]
 pub struct DeviceInfo {
-    pub name: String,
-    pub deviceid: i32,
-    pub deviceuse: DeviceUse,
-    pub attachment: i32,
+    name: String,
+    id: i32,
+    r#use: DeviceUse,
+    attachment: i32,
+    enabled: bool,
 }
 
 impl From<XIDeviceInfo> for DeviceInfo {
@@ -34,9 +35,10 @@ impl From<XIDeviceInfo> for DeviceInfo {
         let name = String::from(name.to_str().unwrap());
         Self {
             name: name,
-            deviceid: device.deviceid,
-            deviceuse: DeviceUse::from_i32(device._use).unwrap(),
+            id: device.deviceid,
+            r#use: DeviceUse::from_i32(device._use).unwrap(),
             attachment: device.attachment,
+            enabled: device.enabled != 0,
         }
     }
 }
