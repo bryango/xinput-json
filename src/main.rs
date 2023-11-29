@@ -7,7 +7,6 @@
 // starting at https://who-t.blogspot.com/2009/05/xi2-recipes-part-1.html
 // for a guide.
 
-mod info;
 
 extern crate libc;
 extern crate x11;
@@ -15,7 +14,6 @@ extern crate x11;
 #[macro_use]
 extern crate num_derive;
 extern crate num_traits;
-use num_traits::FromPrimitive;
 
 use std::ffi::CString;
 use std::mem::{transmute, zeroed};
@@ -23,6 +21,9 @@ use std::os::raw::*;
 use std::ptr::{null, null_mut};
 use std::slice::from_raw_parts;
 use x11::{xinput2, xlib};
+
+mod info;
+use crate::info::DeviceInfo;
 
 /// Provides a basic framework for connecting to an X Display,
 /// creating a window, displaying it and running the event loop
@@ -289,9 +290,9 @@ fn main() {
 
     for i in 0..device_count {
         let device = unsafe { *(devices.offset(i as isize)) };
-        let name = unsafe { CString::from_raw(device.name) };
-        let name = name.to_str().unwrap();
-        println!("{}\t{}\t{:?}\t{}", name, device.deviceid, info::DeviceUse::from_i32(device._use).unwrap(), device.attachment);
+        let device = DeviceInfo::from(device);
+
+        println!("{}\t{}\t{:?}\t{}", device.name, device.deviceid, device.deviceuse, device.attachment);
         // for k in 0..device.num_classes {
         //     let class = unsafe { *(device.classes.offset(k as isize)) };
         //     match unsafe { (*class)._type } {
