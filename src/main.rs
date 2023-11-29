@@ -10,6 +10,11 @@
 extern crate libc;
 extern crate x11;
 
+#[macro_use]
+extern crate num_derive;
+extern crate num_traits;
+use num_traits::FromPrimitive;
+
 use std::ffi::CString;
 use std::mem::{transmute, zeroed};
 use std::os::raw::*;
@@ -270,27 +275,13 @@ fn calc_scroll_deltas(
 
 #[repr(i32)]
 #[derive(Debug)]
+#[derive(FromPrimitive)]
 enum DeviceUse {
     XIMasterPointer = xinput2::XIMasterPointer,
     XIMasterKeyboard = xinput2::XIMasterKeyboard,
     XISlavePointer = xinput2::XISlavePointer,
     XISlaveKeyboard = xinput2::XISlaveKeyboard,
     XIFloatingSlave = xinput2::XIFloatingSlave,
-}
-
-impl TryFrom<i32> for DeviceUse {
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
-        match value {
-            xinput2::XIMasterPointer => Ok(DeviceUse::XIMasterPointer),
-            xinput2::XIMasterKeyboard => Ok(DeviceUse::XIMasterKeyboard),
-            xinput2::XISlavePointer => Ok(DeviceUse::XISlavePointer),
-            xinput2::XISlaveKeyboard => Ok(DeviceUse::XISlaveKeyboard),
-            xinput2::XIFloatingSlave => Ok(DeviceUse::XIFloatingSlave),
-            _ => Err("not a valid device use!"),
-        }
-    }
-
-    type Error = &'static str;
 }
 
 fn main() {
@@ -309,7 +300,7 @@ fn main() {
         let device = unsafe { *(devices.offset(i as isize)) };
         let name = unsafe { CString::from_raw(device.name) };
         let name = name.to_str().unwrap();
-        println!("{}\t{}\t{:?}\t{}", name, device.deviceid, DeviceUse::try_from(device._use).unwrap(), device.attachment);
+        println!("{}\t{}\t{:?}\t{}", name, device.deviceid, DeviceUse::from_i32(device._use).unwrap(), device.attachment);
         // for k in 0..device.num_classes {
         //     let class = unsafe { *(device.classes.offset(k as isize)) };
         //     match unsafe { (*class)._type } {
