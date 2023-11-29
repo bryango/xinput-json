@@ -7,4 +7,5 @@ edition = "2021"
 libc = "0.2.150"
 num-derive = "0.4.1"
 num-traits = "0.2.17"
+serde = { version = "1.0.193", features = ["derive"] }
 x11 = { version = "2.21.0", features = ["xlib", "xinput"] }

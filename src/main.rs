@@ -7,6 +7,8 @@
 // starting at https://who-t.blogspot.com/2009/05/xi2-recipes-part-1.html
 // for a guide.
 
+mod info;
+
 extern crate libc;
 extern crate x11;
 
@@ -273,17 +275,6 @@ fn calc_scroll_deltas(
     scroll_delta
 }
 
-#[repr(i32)]
-#[derive(Debug)]
-#[derive(FromPrimitive)]
-enum DeviceUse {
-    XIMasterPointer = xinput2::XIMasterPointer,
-    XIMasterKeyboard = xinput2::XIMasterKeyboard,
-    XISlavePointer = xinput2::XISlavePointer,
-    XISlaveKeyboard = xinput2::XISlaveKeyboard,
-    XIFloatingSlave = xinput2::XIFloatingSlave,
-}
-
 fn main() {
 
     // see `list_xi2` in https://gitlab.freedesktop.org/xorg/app/xinput/-/blob/master/src/list.c
@@ -300,7 +291,7 @@ fn main() {
         let device = unsafe { *(devices.offset(i as isize)) };
         let name = unsafe { CString::from_raw(device.name) };
         let name = name.to_str().unwrap();
-        println!("{}\t{}\t{:?}\t{}", name, device.deviceid, DeviceUse::from_i32(device._use).unwrap(), device.attachment);
+        println!("{}\t{}\t{:?}\t{}", name, device.deviceid, info::DeviceUse::from_i32(device._use).unwrap(), device.attachment);
         // for k in 0..device.num_classes {
         //     let class = unsafe { *(device.classes.offset(k as isize)) };
         //     match unsafe { (*class)._type } {
