@@ -268,7 +268,80 @@ fn calc_scroll_deltas(
     scroll_delta
 }
 
+#[repr(i32)]
+#[derive(Debug)]
+enum DeviceUse {
+    XIMasterPointer = xinput2::XIMasterPointer,
+    XIMasterKeyboard = xinput2::XIMasterKeyboard,
+    XISlavePointer = xinput2::XISlavePointer,
+    XISlaveKeyboard = xinput2::XISlaveKeyboard,
+    XIFloatingSlave = xinput2::XIFloatingSlave,
+}
+
+impl TryFrom<i32> for DeviceUse {
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            xinput2::XIMasterPointer => Ok(DeviceUse::XIMasterPointer),
+            xinput2::XIMasterKeyboard => Ok(DeviceUse::XIMasterKeyboard),
+            xinput2::XISlavePointer => Ok(DeviceUse::XISlavePointer),
+            xinput2::XISlaveKeyboard => Ok(DeviceUse::XISlaveKeyboard),
+            xinput2::XIFloatingSlave => Ok(DeviceUse::XIFloatingSlave),
+            _ => Err("not a valid device use!"),
+        }
+    }
+
+    type Error = &'static str;
+}
+
 fn main() {
+
+    // see `list_xi2` in https://gitlab.freedesktop.org/xorg/app/xinput/-/blob/master/src/list.c
+    let display = unsafe { xlib::XOpenDisplay(null()) };
+    if display == null_mut() {
+        panic!("can't open display");
+    }
+
+    let mut device_count = 0;
+    let devices =
+    unsafe { xinput2::XIQueryDevice(display, xinput2::XIAllDevices, &mut device_count) };
+
+    for i in 0..device_count {
+        let device = unsafe { *(devices.offset(i as isize)) };
+        let name = unsafe { CString::from_raw(device.name) };
+        let name = name.to_str().unwrap();
+        println!("{}\t{}\t{:?}\t{}", name, device.deviceid, DeviceUse::try_from(device._use).unwrap(), device.attachment);
+        // for k in 0..device.num_classes {
+        //     let class = unsafe { *(device.classes.offset(k as isize)) };
+        //     match unsafe { (*class)._type } {
+        //         xinput2::XIScrollClass => {
+        //             let scroll_class: &xinput2::XIScrollClassInfo = unsafe { transmute(class) };
+        //             axis_list.push(Axis {
+        //                 id: scroll_class.sourceid,
+        //                 device_id: device.deviceid,
+        //                 axis_number: scroll_class.number,
+        //                 axis_type: match scroll_class.scroll_type {
+        //                     xinput2::XIScrollTypeHorizontal => AxisType::HorizontalScroll,
+        //                     xinput2::XIScrollTypeVertical => AxisType::VerticalScroll,
+        //                     _ => {
+        //                         unreachable!()
+        //                     }
+        //                 },
+        //             })
+        //         }
+        //         xinput2::XIValuatorClass => {
+        //             let valuator_class: &xinput2::XIValuatorClassInfo = unsafe { transmute(class) };
+        //             axis_list.push(Axis {
+        //                 id: valuator_class.sourceid,
+        //                 device_id: device.deviceid,
+        //                 axis_number: valuator_class.number,
+        //                 axis_type: AxisType::Other,
+        //             })
+        //         }
+        //         _ => { /* TODO */ }
+        //     }
+        // }
+    }
+
     let mut demo_window = DemoWindow::new(TITLE, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
     // query XInput support
