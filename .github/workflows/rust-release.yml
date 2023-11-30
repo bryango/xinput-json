@@ -17,7 +17,7 @@ jobs:
       - name: Install x11 dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install libx11-dev libxi-dev
+          sudo apt-get install libx11-dev libxi-dev pkg-config
       - name: Compile and release
         uses: rust-build/rust-build.action@v1.4.4
         env:
