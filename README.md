@@ -1,6 +1,7 @@
 # xinput-json
 
 Reproduce the result of `xinput list --short` in a json format, suitable for later processing.
+This is heavily based on [the example `input.rs`](https://github.com/AltF02/x11-rs/blob/master/x11/examples/input.rs) from [the `x11` crate](https://github.com/AltF02/x11-rs).
 
 Of course, I can write a convoluted `sed` or `awk` script to parse the text output of `xinput`, but I chose not to.
 It is much more elegant to write a tiny rust program to do that!
