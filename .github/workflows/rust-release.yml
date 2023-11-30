@@ -15,7 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Install x11 dependencies
-        run: sudo apt-get install xorg
+        run: |
+          sudo apt-get update
+          sudo apt-get install xorg
       - name: Compile and release
         uses: rust-build/rust-build.action@v1.4.4
         env:
