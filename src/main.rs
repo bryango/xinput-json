@@ -61,7 +61,11 @@ fn main() {
     // dump basic device info as json
     // see `list_xi2` in https://gitlab.freedesktop.org/xorg/app/xinput/-/blob/master/src/list.c
     let mut device_count = 0;
-    let all_devices = unsafe { xinput2::XIQueryDevice(display, xinput2::XIAllDevices, &mut device_count) };
+    let all_devices = unsafe { xinput2::XIQueryDevice(
+        display,
+        xinput2::XIAllDevices,
+        &mut device_count
+    ) };
 
     let device_by_number = |i: i32| -> DeviceInfo {
         let device = unsafe { *(all_devices.offset(i as isize)) };
