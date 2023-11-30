@@ -23,3 +23,4 @@ jobs:
           EXTRA_FILES: "README.md LICENSE"
           MINIFY: true
           PRE_BUILD: ./.github/workflows/pre.sh
+          STATIC_LINKING: false
