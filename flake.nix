@@ -20,27 +20,23 @@
     };
   };
 
-  outputs = { self, nixpkgs, crane, flake-utils, ... }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-
         lib = nixpkgs.legacyPackages.${system}.lib;
+        crossSystem = lib.systems.examples.musl64;
+        localSystem = system;
 
-        ## compile static binary
-        ## https://github.com/NixOS/nixpkgs/blob/master/doc/languages-frameworks/rust.section.md
-        ## https://n8henrie.com/2023/09/crosscompile-rust-for-x86-linux-from-m1-mac-with-nix/
         pkgs = import nixpkgs {
-          inherit system;
-          crossSystem = let
-              musl64 = lib.systems.examples.musl64;
-            in {
-              config = musl64.config;
-              rustc.config = musl64.config;
-              isStatic = true;
-            };
+          inherit localSystem crossSystem;
+          overlays = [ (import rust-overlay) ];
         };
 
-        craneLib = crane.mkLib pkgs;
+        rustToolchain = pkgs.rust-bin.stable.latest.default.override {
+          targets = [ "x86_64-unknown-linux-musl" ];
+        };
+
+        craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
 
         my-crate = craneLib.buildPackage {
           src = craneLib.cleanCargoSource (craneLib.path ./.);
@@ -48,18 +44,19 @@
 
           CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
           CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER = "${pkgs.llvmPackages.lld}/bin/lld";
 
           buildInputs = [
-            # additional build inputs here
             pkgs.xorg.libX11
             pkgs.xorg.libXi
           ];
 
           nativeBuildInputs = [
             pkgs.pkg-config
+            pkgs.xorg.libX11
+            pkgs.xorg.libXi
           ];
 
-          # MY_CUSTOM_VAR = "some value";
         };
       in
       {
