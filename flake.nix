@@ -10,17 +10,44 @@
     };
 
     flake-utils.url = "github:numtide/flake-utils";
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+      };
+    };
   };
 
   outputs = { self, nixpkgs, crane, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
 
-        craneLib = crane.lib.${system};
+        lib = nixpkgs.legacyPackages.${system}.lib;
+
+        ## compile static binary
+        ## https://github.com/NixOS/nixpkgs/blob/master/doc/languages-frameworks/rust.section.md
+        ## https://n8henrie.com/2023/09/crosscompile-rust-for-x86-linux-from-m1-mac-with-nix/
+        pkgs = import nixpkgs {
+          inherit system;
+          crossSystem = let
+              musl64 = lib.systems.examples.musl64;
+            in {
+              config = musl64.config;
+              rustc.config = musl64.config;
+              isStatic = true;
+            };
+        };
+
+        craneLib = crane.mkLib pkgs;
+
         my-crate = craneLib.buildPackage {
           src = craneLib.cleanCargoSource (craneLib.path ./.);
           strictDeps = true;
+
+          CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+          CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
 
           buildInputs = [
             # additional build inputs here
