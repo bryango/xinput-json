@@ -81,5 +81,11 @@
             # pkgs.ripgrep
           ];
         };
+
+        nixConfig = {
+          extra-substituters = [ "https://chezbryan.cachix.org" ];
+          extra-trusted-public-keys = [ "chezbryan.cachix.org-1:4n1STyrAtSfRth4sbgUCKfgjtgR8yIy40jIV829Lfow=" ];
+        };
+
       });
 }
