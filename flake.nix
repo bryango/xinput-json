@@ -23,12 +23,10 @@
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        lib = nixpkgs.legacyPackages.${system}.lib;
-        crossSystem = lib.systems.examples.musl64;
-        localSystem = system;
 
+        ## https://crane.dev/examples/cross-musl.html
         pkgs = import nixpkgs {
-          inherit localSystem crossSystem;
+          inherit system;
           overlays = [ (import rust-overlay) ];
         };
 
@@ -43,21 +41,20 @@
           strictDeps = true;
 
           CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
-          CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
-          # CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER = "${pkgs.llvmPackages.lld}/bin/lld";
+          CARGO_BUILD_RUSTFLAGS = ''
+            -C target-feature=+crt-static
+            -l xcb -l Xau -l Xdmcp -l Xext
+          '';  ## ^ additional libs to link
 
-          buildInputs = [
-            pkgs.pkgsStatic.xorg.libX11
-            pkgs.pkgsStatic.xorg.libXi
-            # pkgs.pkgsStatic.xorg.libxcb
+          ## link to `pkgs.pkgsStatic`
+          buildInputs = with pkgs.pkgsStatic; [
+            xorg.libX11
+            xorg.libXi
           ];
 
           nativeBuildInputs = [
             pkgs.pkg-config
           ];
-
-          # Add precompiled library to rustc search path
-          RUSTFLAGS = "-l xcb -l Xau -l Xdmcp -l Xext";
 
         };
       in
