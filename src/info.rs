@@ -1,14 +1,9 @@
 
-// use std::fmt;
 use std::ffi::CString;
 use serde::Serialize;
 use x11::xinput2::{self, XIDeviceInfo};
 use num_traits::FromPrimitive;
 
-
-// fn debug_format<T: fmt::Debug>(object: T) -> String {
-//     format!("{:?}", object)
-// }
 
 #[repr(i32)]
 #[derive(Debug, FromPrimitive, Serialize)]

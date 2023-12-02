@@ -12,23 +12,22 @@ use std::ptr::{null, null_mut};
 mod info;
 use crate::info::DeviceInfo;
 
-fn main() {
+/// Opens X display and checks for xinput2 support
+fn x_display_checked() -> *mut xlib::_XDisplay {
 
     // xinput2 example for x11-rs
     // see Pete Hutterer's "XI2 Recipes" blog series,
     // starting at https://who-t.blogspot.com/2009/05/xi2-recipes-part-1.html
 
     let display = unsafe { xlib::XOpenDisplay(null()) };
-    if display == null_mut() {
-        panic!("can't open display");
-    }
+    if display == null_mut() { panic!("can't open display"); }
 
     // query xinput support
     let mut opcode: c_int = 0;
     let mut event: c_int = 0;
     let mut error: c_int = 0;
     let xinput_str = CString::new("XInputExtension").unwrap();
-    let xinput_available = unsafe {
+    if unsafe {
         xlib::XQueryExtension(
             display,
             xinput_str.as_ptr(),
@@ -36,11 +35,9 @@ fn main() {
             &mut event,
             &mut error,
         )
-    };
-    if xinput_available == xlib::False {
-        panic!("XInput not available")
-    }
+    } == xlib::False { panic!("XInput not available") }
 
+    // check xinput version
     let mut xinput_major_ver = xinput2::XI_2_Major;
     let mut xinput_minor_ver = xinput2::XI_2_Minor;
     if unsafe {
@@ -49,16 +46,22 @@ fn main() {
             &mut xinput_major_ver,
             &mut xinput_minor_ver,
         )
-    } != xlib::Success as c_int
-    {
-        panic!("XInput2 not available");
-    }
+    } != xlib::Success as c_int { panic!("XInput2 not available"); }
+
     eprintln!(
         "XI version available {}.{}",
         xinput_major_ver, xinput_minor_ver
     );
+    return display
 
-    // dump basic device info as json
+}
+
+
+/// Dumps xinput2 device info (only the basics) as json
+fn main() {
+
+    let display = x_display_checked();
+
     // see `list_xi2` in https://gitlab.freedesktop.org/xorg/app/xinput/-/blob/master/src/list.c
     let mut device_count = 0;
     let all_devices = unsafe { xinput2::XIQueryDevice(
