@@ -52,9 +52,15 @@
             xorg.libXi
           ];
 
-          nativeBuildInputs = [
-            pkgs.pkg-config
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            nukeReferences
           ];
+
+          ## https://github.com/NixOS/nix/issues/5633#issuecomment-976502133
+          postFixup = ''
+            nuke-refs $out/bin/*
+          '';
 
         };
       in
