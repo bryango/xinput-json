@@ -44,18 +44,20 @@
 
           CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
           CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER = "${pkgs.llvmPackages.lld}/bin/lld";
+          # CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER = "${pkgs.llvmPackages.lld}/bin/lld";
 
           buildInputs = [
-            pkgs.xorg.libX11
-            pkgs.xorg.libXi
+            pkgs.pkgsStatic.xorg.libX11
+            pkgs.pkgsStatic.xorg.libXi
+            # pkgs.pkgsStatic.xorg.libxcb
           ];
 
           nativeBuildInputs = [
             pkgs.pkg-config
-            pkgs.xorg.libX11
-            pkgs.xorg.libXi
           ];
+
+          # Add precompiled library to rustc search path
+          RUSTFLAGS = "-l xcb -l Xau -l Xdmcp -l Xext";
 
         };
       in
