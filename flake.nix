@@ -69,7 +69,20 @@
           inherit my-crate;
         };
 
-        packages.default = my-crate;
+        packages = {
+          default = my-crate;
+          wingcool-bind = pkgs.writeShellApplication {
+            name = "wingcool-bind";
+            runtimeInputs = with pkgs; [
+              my-crate
+              jq
+              findutils
+              xorg.xinput
+            ];
+
+            text = builtins.readFile ./scripts/wingcool-bind.sh;
+          };
+        };
 
         apps.default = flake-utils.lib.mkApp {
           drv = my-crate;
