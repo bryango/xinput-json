@@ -72,7 +72,7 @@
         packages = {
           default = my-crate;
           wingcool-bind = pkgs.writeShellApplication {
-            name = "wingcool-bind";
+            name = "xinput-wingcool-bind";
             runtimeInputs = with pkgs; [
               my-crate
               jq
