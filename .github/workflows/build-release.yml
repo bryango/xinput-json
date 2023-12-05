@@ -1,7 +1,7 @@
 name: "build and release"
 on:
   release:
-    types: [created, edited]
+    types: [published, created, edited, released]
 
 jobs:
   build-release:
