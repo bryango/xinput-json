@@ -1,50 +1,57 @@
 {
-  description = "Build a cargo project with crane";
+  description = "xinput-json: reproduce `xinput list --short` in json";
 
   inputs = {
-    nixpkgs.url = "nixpkgs";
+    nixpkgs.url = "nixpkgs"; # from nix flake registry
 
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    flake-utils.url = "github:numtide/flake-utils";
-
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
-      };
+    fenix = {
+      url = "fenix"; # from nix flake registry
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-
-        ## https://crane.dev/examples/cross-musl.html
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ (import rust-overlay) ];
-        };
-
-        rustToolchain = pkgs.rust-bin.stable.latest.default.override {
-          targets = [ "x86_64-unknown-linux-musl" ];
-        };
-
-        craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-
-        my-crate = craneLib.buildPackage {
+  outputs = { self, nixpkgs, crane, fenix }:
+    let
+      inherit (nixpkgs) lib;
+      supportedSystems = [
+        "x86_64-linux"
+      ];
+      target = "x86_64-unknown-linux-musl";
+      forEachSystem = mkPackages: lib.genAttrs supportedSystems (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          final = self.packages.${system};
+          /**
+            https://github.com/nix-community/fenix
+            https://crane.dev/examples/cross-musl.html
+          */
+          rustToolchain = with fenix.packages.${system}; combine [
+            minimal.cargo
+            minimal.rustc
+            targets.${target}.latest.rust-std
+          ];
+          craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
+        in
+        mkPackages {
+          inherit craneLib pkgs final;
+        });
+    in
+    {
+      packages = forEachSystem ({ craneLib, pkgs, final }: {
+        default = craneLib.buildPackage {
           src = craneLib.cleanCargoSource (craneLib.path ./.);
           strictDeps = true;
 
-          CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+          CARGO_BUILD_TARGET = target;
           CARGO_BUILD_RUSTFLAGS = ''
             -C target-feature=+crt-static
             -l xcb -l Xau -l Xdmcp -l Xext
-          '';  ## ^ additional libs to link
+          ''; ## ^ additional libs to link
 
           ## link to `pkgs.pkgsStatic`
           buildInputs = with pkgs.pkgsStatic; [
@@ -61,50 +68,33 @@
           postFixup = ''
             nuke-refs $out/bin/*
           '';
-
-        };
-      in
-      {
-        checks = {
-          inherit my-crate;
         };
 
-        packages = {
-          default = my-crate;
-          wingcool-bind = pkgs.writeShellApplication {
-            name = "xinput-wingcool-bind";
-            runtimeInputs = with pkgs; [
-              my-crate
-              jq
-              findutils
-              xorg.xinput
-            ];
-
-            text = builtins.readFile ./scripts/wingcool-bind.sh;
-          };
+        wingcool-bind = pkgs.writeShellApplication {
+          name = "xinput-wingcool-bind";
+          runtimeInputs = with pkgs; [
+            crate
+            jq
+            findutils
+            xorg.xinput
+          ];
+          text = builtins.readFile ./scripts/wingcool-bind.sh;
         };
+      });
 
-        apps.default = flake-utils.lib.mkApp {
-          drv = my-crate;
-        };
-
-        devShells.default = craneLib.devShell {
-          # inherit inputs from checks.
-          checks = self.checks.${system};
-
-          # MY_CUSTOM_DEVELOPMENT_VAR = "something else";
-
+      devShells = forEachSystem ({ craneLib, pkgs, final }: {
+        default = craneLib.devShell {
           # extra inputs can be added here
           # cargo and rustc are provided by default.
           packages = [
             # pkgs.ripgrep
           ];
         };
-
-        nixConfig = {
-          extra-substituters = [ "https://chezbryan.cachix.org" ];
-          extra-trusted-public-keys = [ "chezbryan.cachix.org-1:4n1STyrAtSfRth4sbgUCKfgjtgR8yIy40jIV829Lfow=" ];
-        };
-
       });
+
+      nixConfig = {
+        extra-substituters = [ "https://chezbryan.cachix.org" ];
+        extra-trusted-public-keys = [ "chezbryan.cachix.org-1:4n1STyrAtSfRth4sbgUCKfgjtgR8yIy40jIV829Lfow=" ];
+      };
+    };
 }
