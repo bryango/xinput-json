@@ -49,6 +49,7 @@
 
           CARGO_BUILD_TARGET = target;
           CARGO_BUILD_RUSTFLAGS = ''
+            -C link-arg=-fuse-ld=mold
             -C target-feature=+crt-static
             -l xcb -l Xau -l Xdmcp -l Xext
           ''; ## ^ additional libs to link
@@ -62,6 +63,7 @@
           nativeBuildInputs = with pkgs; [
             pkg-config
             nukeReferences
+            mold
           ];
 
           ## https://github.com/NixOS/nix/issues/5633#issuecomment-976502133
