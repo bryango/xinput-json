@@ -63,7 +63,7 @@
           nativeBuildInputs = with pkgs; [
             pkg-config
             nukeReferences
-            mold
+            mold-wrapped # https://discourse.nixos.org/t/18530
           ];
 
           ## https://github.com/NixOS/nix/issues/5633#issuecomment-976502133
