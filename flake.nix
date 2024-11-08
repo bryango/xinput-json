@@ -4,10 +4,7 @@
   inputs = {
     nixpkgs.url = "nixpkgs"; # from nix flake registry
 
-    crane = {
-      url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    crane.url = "github:ipetkov/crane";
 
     fenix = {
       url = "fenix"; # from nix flake registry
