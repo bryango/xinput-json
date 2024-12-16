@@ -72,7 +72,7 @@
         wingcool-bind = pkgs.writeShellApplication {
           name = "xinput-wingcool-bind";
           runtimeInputs = with pkgs; [
-            crate
+            final.default
             jq
             findutils
             xorg.xinput
@@ -90,10 +90,10 @@
           ];
         };
       });
+    };
 
-      nixConfig = {
-        extra-substituters = [ "https://chezbryan.cachix.org" ];
-        extra-trusted-public-keys = [ "chezbryan.cachix.org-1:4n1STyrAtSfRth4sbgUCKfgjtgR8yIy40jIV829Lfow=" ];
-      };
+    nixConfig = {
+      extra-substituters = [ "https://chezbryan.cachix.org" ];
+      extra-trusted-public-keys = [ "chezbryan.cachix.org-1:4n1STyrAtSfRth4sbgUCKfgjtgR8yIy40jIV829Lfow=" ];
     };
 }
